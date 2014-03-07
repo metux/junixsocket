@@ -1,0 +1,13 @@
+Source: junixsocket
+Section: libs
+Priority: extra
+Maintainer: Enrico Weigelt, metux IT service <weigelt@metux.de>
+Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 7), default-jdk, ant, junit4, junit, libc6-dev, libc6-dev-i386
+
+Package: junixsocket
+Architecture: any
+Pre-Depends: debconf
+Depends:  ${misc:Depends}
+Description: Native unix socket implementation for Java (JNI)
+

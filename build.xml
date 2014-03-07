@@ -18,7 +18,7 @@
 <project name="junixsocket" default="dist" basedir=".">
 
 	<property environment="env" />
-	<property name="jdk.home" value="${env.JAVA_HOME}" />
+	<property name="jdk.home" value="/usr/lib/jvm/default-java/" />
 
 	<property name="app.name" value="junixsocket" />
 	<property name="app.title" value="junixsocket library" />
@@ -43,6 +43,13 @@
 	</condition>
 	<condition property="isSunOS">
 		<equals arg1="${os.name}" arg2="SunOS" />
+	</condition>
+
+	<condition property="arch_i386">
+		<equals arg1="${os.arch}" arg2="i386" />
+	</condition>
+	<condition property="arch_amd64">
+		<equals arg1="${os.arch}" arg2="amd64" />
 	</condition>
 
 	<target name="describe">
@@ -139,14 +146,14 @@
 		<antcall target="gcc-mac.64" />
 	</target>
 
-	<target name="gcc-mac.32" unless="skip32">
+	<target name="gcc-mac.32" if="arch_i386">
 		<antcall target="gcc-mac.arch">
 			<param name="gccArch" value="i386" />
 		</antcall>
 	</target>
-	<target name="gcc-mac.64" unless="skip64">
+	<target name="gcc-mac.64" if="arch_amd64">
 		<antcall target="gcc-mac.arch">
-			<param name="gccArch" value="x86_64" />
+			<param name="gccArch" value="amd64" />
 		</antcall>
 	</target>
 
@@ -173,18 +180,19 @@
 		<property name="gcc" value="/usr/bin/gcc" />
 
 		<echo message="jdk.home is ${jdk.home}" />
+		<echo message="architecture is ${os.arch}" />
 
 		<antcall target="gcc-linux.32" />
 		<antcall target="gcc-linux.64" />
 	</target>
 
-	<target name="gcc-linux.32" unless="skip32">
+	<target name="gcc-linux.32" if="arch_i386">
 		<antcall target="gcc-linux.arch">
 			<param name="gccArch" value="i386" />
 			<param name="gccM" value="-m32" />
 		</antcall>
 	</target>
-	<target name="gcc-linux.64" unless="skip64">
+	<target name="gcc-linux.64" if="arch_amd64">
 		<antcall target="gcc-linux.arch">
 			<param name="gccArch" value="amd64" />
 			<param name="gccM" value="-m64" />
@@ -193,6 +201,17 @@
 
 	<target name="gcc-linux.arch">
 		<property name="outLib" value="${lib.native}/libjunixsocket-linux-${app.javaversion}-${gccArch}.so" />
+
+		<mkdir dir="${lib.native}" />
+
+		<exec executable="/bin/echo" failonerror="true">
+			<arg value="lib.native" />
+			<arg value="${lib.native}" />
+		</exec>
+
+		<exec executable="/usr/bin/find">
+			<arg value="${lib.native}" />
+		</exec>
 
 		<echo message="Compiling for architecture ${gccArch} on ${os.name}" />
 		<exec executable="${gcc}" failonerror="true">
@@ -207,6 +226,8 @@
 			<arg value="${jdk.home}/include/linux" />
 			<arg value="-o" />
 			<arg value="${outLib}" />
+			<arg value="-I" />
+			<arg value="/usr/include/x86_64-linux-gnu" />
 			<arg value="${src.main}/org/newsclub/net/unix/org_newsclub_net_unix_NativeUnixSocket.c" />
 		</exec>
 	</target>
@@ -221,20 +242,19 @@
 		<antcall target="gcc-sunos.64" />
 	</target>
 
-	<target name="gcc-sunos.32" unless="skip32">
+	<target name="gcc-sunos.32" if="arch_i386">
 		<antcall target="gcc-sunos.arch">
 			<param name="gccArch" value="x86" />
 			<param name="gccM" value="-m32" />
 		</antcall>
 	</target>
-	<target name="gcc-sunos.64" unless="skip64">
+	<target name="gcc-sunos.64" if="arch_amd64">
 		<antcall target="gcc-sunos.arch">
 			<param name="gccArch" value="amd64" />
 			<param name="gccM" value="-m64" />
 		</antcall>
 	</target>
-	
-	
+
 	<target name="gcc-sunos.arch">
 		<property name="outLib" value="${lib.native}/libjunixsocket-sunos-${app.javaversion}-${gccArch}.so" />
 
@@ -277,19 +297,18 @@
 		<antcall target="gcc-freebsd.32" />
 		<antcall target="gcc-freebsd.64" />
 	</target>
-	
-	<target name="gcc-freebsd.32" unless="skip32">
+
+	<target name="gcc-freebsd.32" if="arch_i386">
 		<antcall target="gcc-freebsd.arch">
 			<param name="gccArch" value="i386" />
 		</antcall>
 	</target>
-	<target name="gcc-freebsd.64" unless="skip64">
+	<target name="gcc-freebsd.64" if="arch_amd64">
 		<antcall target="gcc-freebsd.arch">
 			<param name="gccArch" value="amd64" />
 		</antcall>
 	</target>
-	
-	
+
 	<target name="gcc-freebsd.arch">
 		<property name="outLib" value="${lib.native}/libjunixsocket-freebsd-${app.javaversion}-${gccArch}.so" />
 
@@ -341,8 +360,7 @@
 		</replaceregexp>
 	</target>
 
-	<target name="jars" depends="test" description="Makes a distributable jar">
-
+	<target name="jars" description="Makes a distributable jar">
 		<jar destfile="${jar.main}">
 			<fileset dir="${build.main}">
 				<include name="**/*" />
@@ -369,7 +387,7 @@
 		</jar>
 	</target>
 
-	<target name="dist" depends="clean,init,javadoc,jars">
+	<target name="dist" depends="clean,init,javadoc,compile,jars,gcc">
 		<tar destfile="${distBin.tar.bz2}" compression="bzip2">
 			<tarfileset dir="." prefix="${app.name}-${app.version}/">
 				<include name="README.txt" />

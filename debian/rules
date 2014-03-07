@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_VERBOSE=1
+export JDK_HOME=/usr/lib/jvm/default-java/
+export DESTDIR=$(CURDIR)/debian/junixsocket
+export JARDIR=/usr/share/java
+export LIBDIR=/usr/lib
+
+%:
+	dh ${@}
+
+override_dh_install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	mkdir -p $(DESTDIR)$(JARDIR) $(DESTDIR)$(LIBDIR)
+	cp $(CURDIR)/dist/junixsocket-1.3.jar $(DESTDIR)$(JARDIR)
+	cp $(CURDIR)/dist/junixsocket-demo-1.3.jar $(DESTDIR)$(JARDIR)
+	cp $(CURDIR)/dist/junixsocket-mysql-1.3.jar $(DESTDIR)$(JARDIR)
+	cp $(CURDIR)/dist/junixsocket-rmi-1.3.jar $(DESTDIR)$(JARDIR)
+	cp $(CURDIR)/lib-native/*.so $(DESTDIR)$(LIBDIR)

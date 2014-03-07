@@ -1,0 +1,5 @@
+junixsocket (1.3-precise1) precise; urgency=low
+
+  * Packaging for Ubuntu precise
+
+ -- Enrico Weigelt, metux IT service <weigelt@metux.de>  Fri, 07 Mar 2013 20:28:00 +0100
